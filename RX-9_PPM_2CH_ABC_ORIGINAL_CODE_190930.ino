@@ -425,7 +425,7 @@ void Auto_CAL(){
   THER_ini = THER_data; //2CH
   EMF_max = EMF_data; //ABC
   THER_max = THER_data; //2CH
-  THER_ini = THER_data; //2CH
+  //THER_ini = THER_data; //2CH, delete 191106
   
   ELTI = 0; //ABC
   CANU++;  //ABC
