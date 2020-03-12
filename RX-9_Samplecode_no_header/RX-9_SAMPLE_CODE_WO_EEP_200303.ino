@@ -437,7 +437,7 @@ void DMG_5000()
     if (status_sensor == 1) {
         if (co2_ppm_output >= 5000) {
             if (ppm_max_cnt > 60) {
-                MEIN = 3;
+                MEIN_common = 3;
                 damage_cnt_fg = 1;
                 ppm_max_cnt = 0;
             }
@@ -450,7 +450,7 @@ void DMG_5000()
         }
     }
     if (damage_cnt > 5) {
-        MEIN = 120;
+        MEIN_common = MEIN;
         damage_cnt = 0;
         damage_cnt_fg = 0;
     }
