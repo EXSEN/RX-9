@@ -11,7 +11,7 @@
  *  2. Use external 3.3V source. you can use this (https://ko.aliexpress.com/item/1996291344.html?spm=a2g0s.9042311.0.0.27424c4dytyPzF)
  *  
  */
-const String VER = "RX-9_SAMPLE_CODE_WO_EEP_200303";
+const String VER = "RX-9_SAMPLE_CODE_WO_EEP_200312";
 
 #define EMF_pin 0  //RX-9 E, Analog, A0 of Arduino 
 #define THER_pin 1 //RX-9 T, Analog, A1 of Arduino
@@ -124,13 +124,13 @@ float under_cut = 0.99;               // if co2_ppm shows lower than (Base_line 
 bool damage_cnt_fg = 0;
 unsigned int damage_cnt = 0;
 unsigned int ppm_max_cnt = 0;
-float cal_A_LOG[2][10] = {0,};
+float cal_A_LOG[2][20] = {0,};
 bool cal_A_LOCK = 0;
 float cal_A_LOCK_value = 0.0;
 float emf_LOCK_value = 0.0;
 unsigned int LOCK_delta = 50;
 unsigned int LOCK_disable = 5;
-unsigned int LOCK_timer = 5;
+unsigned int LOCK_timer = 15;
 unsigned int LOCK_timer_cnt = 0;
 unsigned int S3_cnt = 0;
 
@@ -278,7 +278,7 @@ void auto_calib_co2(){
     MEIN_flag = 1;
     MEIN_common = MEIN_start;
   }
-  else if(current_time >= start_stablize + 1 && MEIN_flag == 1){
+  else if(current_time >= start_stablize + 1 && MEIN_flag == 1 && damage_cnt_fg == 0){
     MEIN_common = MEIN;
     //if(display_mode){Serial.println("MEIN_common = MEIN");}
   }
@@ -320,14 +320,14 @@ void auto_calib_co2(){
 }
 
 void DMG_REC(){
-  for(int i = 0; i < 10; i++){
+  for(int i = 0; i < 19; i++){
     cal_A_LOG[0][i] = cal_A_LOG[0][i+1];
     cal_A_LOG[1][i] = cal_A_LOG[1][i+1];
   }
-    cal_A_LOG[0][9] = cal_A;
-    cal_A_LOG[1][9] = EMF_data;
+    cal_A_LOG[0][19] = cal_A;
+    cal_A_LOG[1][19] = EMF_data;
     if(status_sensor == 1){
-      if((cal_A_LOG[1][9] - cal_A_LOG[1][2] >= LOCK_delta) && (cal_A_LOG[1][8] - cal_A_LOG[1][1] >= LOCK_delta) && (cal_A_LOG[1][7] - cal_A_LOG[1][0] >= LOCK_delta)){
+      if((cal_A_LOG[1][19] - cal_A_LOG[1][2] >= LOCK_delta) && (cal_A_LOG[1][18] - cal_A_LOG[1][1] >= LOCK_delta) && (cal_A_LOG[1][17] - cal_A_LOG[1][0] >= LOCK_delta)){
         if(cal_A_LOCK == 0){
           cal_A_LOCK = 1;
           cal_A_LOCK_value = cal_A_LOG[0][0];
@@ -336,8 +336,8 @@ void DMG_REC(){
           //if(debug); Serial.println("S1 ---- cal_A_LOG[1][0] = " + cal_A_LOG[1][0] + "cal_A_LOG[1][9] = " + cal_A_LOG[1][9]);
          }
       }
-      else if((cal_A_LOG[1][2] > 375 - LOCK_delta) && (cal_A_LOG[1][1] > 375 - LOCK_delta) && (cal_A_LOG[1][0] > 375 - LOCK_delta) && (cal_A_LOG[1][2] <= 375 - LOCK_disable) && (cal_A_LOG[1][1] <= 375 - LOCK_disable) && (cal_A_LOG[1][0] <= 375 - LOCK_disable)){
-        if((cal_A_LOG[1][7] > 375) && (cal_A_LOG[1][8] > 375) && (cal_A_LOG[1][9] > 375)){
+      else if((cal_A_LOG[1][2] > 540 - LOCK_delta) && (cal_A_LOG[1][1] > 540 - LOCK_delta) && (cal_A_LOG[1][0] > 540 - LOCK_delta) && (cal_A_LOG[1][2] <= 540 - LOCK_disable) && (cal_A_LOG[1][1] <= 540 - LOCK_disable) && (cal_A_LOG[1][0] <= 540 - LOCK_disable)){
+        if((cal_A_LOG[1][17] > 540) && (cal_A_LOG[1][18] > 540) && (cal_A_LOG[1][19] > 540)){
           if(cal_A_LOCK == 0){
             cal_A_LOCK = 1;
             cal_A_LOCK_value = cal_A_LOG[0][0];
@@ -352,7 +352,7 @@ void DMG_REC(){
       }
     }
     if(cal_A_LOCK == 1){
-      if(cal_A_LOG[1][9] - emf_LOCK_value < LOCK_disable){
+      if(EMF_data - emf_LOCK_value < LOCK_disable){
         S3_cnt++;
         if(S3_cnt >= 10){
           S3_cnt = 0;
@@ -437,7 +437,7 @@ void DMG_5000()
     if (status_sensor == 1) {
         if (co2_ppm_output >= 5000) {
             if (ppm_max_cnt > 60) {
-                MEIN_common = 3;
+                MEIN_common = 2;
                 damage_cnt_fg = 1;
                 ppm_max_cnt = 0;
             }

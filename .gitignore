@@ -1,0 +1,8 @@
+*.ewp
+*.esd
+*.icf
+/libraries
+*.wsdt
+*.wspos
+*.bat
+*.jlink

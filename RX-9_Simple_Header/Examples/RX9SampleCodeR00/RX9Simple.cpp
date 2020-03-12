@@ -2,7 +2,7 @@
 #include "RX9Simple.h"
 
 //VERSION
-static const String VER = "RX-9_Simple_operating_header_R0";
+static const String VER = "RX-9_Simple_operating_header_R1";
 //Timing
 static unsigned long sec_1cnt = 0;
 
@@ -60,13 +60,13 @@ static float DEDT = 1.0;           //Delta EMF/Delta THER, if DEDT = 1 means tem
 static bool damage_cnt_fg = 0;
 static unsigned int damage_cnt = 0;
 static unsigned int ppm_max_cnt = 0;
-static float cal_A_LOG[2][10] = { 0, };
+static float cal_A_LOG[2][20] = { 0, };
 static bool cal_A_LOCK = 0;
 static float cal_A_LOCK_value = 0.0;
 static float emf_LOCK_value = 0.0;
 static unsigned int LOCK_delta = 50;
 static unsigned int LOCK_disable = 5;
-static unsigned int LOCK_timer = 5;
+static unsigned int LOCK_timer = 15;
 static unsigned int LOCK_timer_cnt = 0;
 static unsigned int S3_cnt = 0;
 
@@ -186,7 +186,7 @@ void RX9Simple::DMG_5000()
     if (_status_sensor == 1) {
         if (co2_ppm_output >= 5000) {
             if (ppm_max_cnt > 60) {
-                MEIN_common = 3;
+                MEIN_common = 2;
                 damage_cnt_fg = 1;
                 ppm_max_cnt = 0;
             }
@@ -223,7 +223,7 @@ void RX9Simple::auto_calib_co2()
         MEIN_flag = 1;
         MEIN_common = MEIN_start;
     }
-    else if (sec_1cnt >= start_stablize + 1 && MEIN_flag == 1) {
+    else if (sec_1cnt >= start_stablize + 1 && MEIN_flag == 1 && damage_cnt_fg == 0) {
         MEIN_common = _mein;
       
     }
@@ -265,14 +265,14 @@ void RX9Simple::auto_calib_co2()
 }
 void RX9Simple::DMG_REC()
 {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 19; i++) {
         cal_A_LOG[0][i] = cal_A_LOG[0][i + 1];
         cal_A_LOG[1][i] = cal_A_LOG[1][i + 1];
     }
-    cal_A_LOG[0][9] = cal_A;
-    cal_A_LOG[1][9] = EMF_data;
+    cal_A_LOG[0][19] = cal_A;
+    cal_A_LOG[1][19] = EMF_data;
     if (_status_sensor == 1) {
-        if ((cal_A_LOG[1][9] - cal_A_LOG[1][2] >= LOCK_delta) && (cal_A_LOG[1][8] - cal_A_LOG[1][1] >= LOCK_delta) && (cal_A_LOG[1][7] - cal_A_LOG[1][0] >= LOCK_delta)) {
+        if ((cal_A_LOG[1][19] - cal_A_LOG[1][2] >= LOCK_delta) && (cal_A_LOG[1][18] - cal_A_LOG[1][1] >= LOCK_delta) && (cal_A_LOG[1][17] - cal_A_LOG[1][0] >= LOCK_delta)) {
             if (cal_A_LOCK == 0) {
                 cal_A_LOCK = 1;
                 cal_A_LOCK_value = cal_A_LOG[0][0];
@@ -281,8 +281,8 @@ void RX9Simple::DMG_REC()
                 
             }
         }
-        else if ((cal_A_LOG[1][2] > 375 - LOCK_delta) && (cal_A_LOG[1][1] > 375 - LOCK_delta) && (cal_A_LOG[1][0] > 375 - LOCK_delta) && (cal_A_LOG[1][2] <= 375 - LOCK_disable) && (cal_A_LOG[1][1] <= 375 - LOCK_disable) && (cal_A_LOG[1][0] <= 375 - LOCK_disable)) {
-            if ((cal_A_LOG[1][7] > 375) && (cal_A_LOG[1][8] > 375) && (cal_A_LOG[1][9] > 375)) {
+        else if ((cal_A_LOG[1][2] > 540 - LOCK_delta) && (cal_A_LOG[1][1] > 540 - LOCK_delta) && (cal_A_LOG[1][0] > 540 - LOCK_delta) && (cal_A_LOG[1][2] <= 540 - LOCK_disable) && (cal_A_LOG[1][1] <= 540 - LOCK_disable) && (cal_A_LOG[1][0] <= 540 - LOCK_disable)) {
+            if ((cal_A_LOG[1][17] > 540) && (cal_A_LOG[1][18] > 540) && (cal_A_LOG[1][19] > 540)) {
                 if (cal_A_LOCK == 0) {
                     cal_A_LOCK = 1;
                     cal_A_LOCK_value = cal_A_LOG[0][0];
@@ -296,7 +296,7 @@ void RX9Simple::DMG_REC()
         }
     }
     if (cal_A_LOCK == 1) {
-        if (cal_A_LOG[1][9] - emf_LOCK_value < LOCK_disable) {
+        if (EMF_data - emf_LOCK_value < LOCK_disable) {
             S3_cnt++;
             if (S3_cnt >= 10) {
                 S3_cnt = 0;
